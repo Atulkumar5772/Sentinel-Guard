@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- 🌟 HEADER BANNER -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,6,24&height=220&section=header&text=🛡️%20Sentinel-Guard&fontSize=48&fontColor=ffffff&animation=twinkling&desc=Linux%20Kernel%20File%20Integrity%20Monitoring%20%26%20Anti-Tamper%20Security%20Daemon&descSize=18&descAlignY=70&descAlign=50" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,6,24&height=220&section=header&text=Sentinel-Guard&fontSize=48&fontColor=ffffff&animation=twinkling&desc=Linux%20Kernel%20File%20Integrity%20Monitoring%20and%20Anti-Tamper%20Security%20Daemon&descSize=18&descAlignY=70&descAlign=50" width="100%"/>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Language-C%2B%2B17-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" />
