@@ -5,7 +5,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Language-C%2B%2B17-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" />
-  <img src="https://img.shields.io/badge/Platform-Red_Hat_Linux_%2F_POSIX-EE0000?style=for-the-badge&logo=redhat&logoColor=white" />
+  <img src="https://img.shields.io/badge/Platform-Red_Hat_Linux-EE0000?style=for-the-badge&logo=redhat&logoColor=white" />
   <img src="https://img.shields.io/badge/Kernel_Subsystem-inotify-FCC624?style=for-the-badge&logo=linux&logoColor=black" />
   <img src="https://img.shields.io/badge/Cryptography-OpenSSL_SHA--256-38BDF8?style=for-the-badge&logo=openssl&logoColor=white" />
   <img src="https://img.shields.io/badge/License-All_Rights_Reserved-red?style=for-the-badge" />
@@ -29,17 +29,17 @@
 /___/\__/_//_/\__/\__/_/_//_/\__/ /____/  \___/\_,_/\_,_/_/  \_,_/ /_//_/ 
 ========================================================================
 [19:10:14] [INFO]     Initializing Sentinel-Guard Daemon v1.0.0...
-[19:10:14] [INFO]     Target directory to protect: /etc/critical_configs
-[19:10:14] [SUCCESS]  Generating SHA-256 Cryptographic Baseline in [.vault]...
+[19:10:14] [INFO]     Target directory to protect: /etc/security/critical_configs
+[19:10:14] [SUCCESS]  Generating SHA-256 Cryptographic Baseline snapshot...
 [19:10:14] [SUCCESS]  Attached Linux Kernel inotify watcher [FD: 4, Watch Descriptor: 1]
 [19:10:14] [INFO]     Daemon Active. Listening for kernel filesystem events...
 ------------------------------------------------------------------------
-[19:10:22] [CRITICAL] Kernel Event [IN_MODIFY] on: /etc/critical_configs/secret.txt
+[19:10:22] [CRITICAL] Kernel Event [IN_MODIFY] on: /etc/security/critical_configs/secret.txt
 [19:10:22] [CRITICAL] 🚨 SHA-256 HASH MISMATCH DETECTED!
                       Baseline : e3b0c44298fc1c149afbf4c8996fb92427ae41e4...
                       Current  : 8f434346648f6b96df89dda901c5176b10a6d839...
 [19:10:22] [WARN]     Kernel Event [IN_ATTRIB] ⚠️  Permissions altered (0644 -> 0777)
-[19:10:25] [CRITICAL] Kernel Event [IN_DELETE] 🚨 File removed: /etc/critical_configs/config.sys
+[19:10:25] [CRITICAL] Kernel Event [IN_DELETE] 🚨 File removed: /etc/security/critical_configs/config.sys
 ```
 
 ---
@@ -52,14 +52,14 @@ flowchart TD
         direction TB
         Main["Main Daemon Controller\n(Signal Handler & CLI Loop)"]
         
-        subgraph CoreEngine ["Core Security Engines"]
-            Watcher["Watcher Engine\n(inotify Buffer Dispatcher)"]
-            Vault["Vault Engine\n(OpenSSL SHA-256 + Baseline DB)"]
+        subgraph CoreEngine ["Core Security Subsystems"]
+            Watcher["Kernel Watcher Engine\n(Event Buffer Dispatcher)"]
+            Verifier["Integrity Verification Engine\n(OpenSSL SHA-256 + State Auditor)"]
             Logger["ANSI Audit Logger\n(Structured Diagnostics)"]
         end
 
         Main --> Watcher
-        Main --> Vault
+        Main --> Verifier
         Main --> Logger
     end
 
@@ -72,17 +72,17 @@ flowchart TD
         InotifySubsys --> EventQueue
     end
 
-    subgraph Storage ["💾 Protected Storage & Baseline"]
-        TargetDir[("Protected Directory\n/test_protected")]
-        VaultStore[("Encrypted Vault Storage\n/.vault")]
+    subgraph Storage ["💾 Filesystem & Baseline Store"]
+        TargetDir[("Monitored Sensitive Directory\n(System Assets & Configs)")]
+        BaselineStore[("Cryptographic Baseline Store\n(Secure Encrypted State)")]
     end
 
     TargetDir -.->|Filesystem I/O Activity| VFS
-    EventQueue ==>|Asynchronous read Event FD| Watcher
-    Watcher -->|Trigger Event Callback| Vault
-    Vault <-->|Verify Hash & Metadata| TargetDir
-    Vault <-->|Compare with Baseline Snapshot| VaultStore
-    Vault -->|Dispatch Status & Alerts| Logger
+    EventQueue ==>|Asynchronous Event FD| Watcher
+    Watcher -->|Trigger Event Callback| Verifier
+    Verifier <-->|Verify Hash & Metadata| TargetDir
+    Verifier <-->|Compare with Baseline Snapshot| BaselineStore
+    Verifier -->|Dispatch Status & Alerts| Logger
 ```
 
 ---
@@ -96,23 +96,23 @@ sequenceDiagram
     participant FS as 📁 Protected Filesystem
     participant Kernel as 🐧 Linux Kernel (inotify)
     participant Sentinel as 🛡️ Sentinel Daemon
-    participant Vault as 🔐 Vault Engine
+    participant Verifier as 🔐 Verification Engine
     participant Log as 📊 Audit Log
 
-    Sentinel->>Vault: Initialize Baseline Snapshot (SHA-256 + Metadata)
-    Vault->>FS: Scan Files & Compute OpenSSL SHA-256
+    Sentinel->>Verifier: Initialize Baseline Snapshot (SHA-256 + Metadata)
+    Verifier->>FS: Scan Files & Compute Cryptographic Hashes
     Sentinel->>Kernel: inotify_add_watch(TargetDir, IN_MODIFY | IN_DELETE | IN_ATTRIB)
 
     Note over Sentinel,Kernel: Daemon enters non-blocking async event loop
 
-    Attacker->>FS: Injects malicious bytes into secret.txt
+    Attacker->>FS: Injects malicious bytes into sensitive files
     FS->>Kernel: VFS File Modification Triggered
     Kernel->>Sentinel: inotify_event (IN_MODIFY)
     Sentinel->>Log: [CRITICAL] Kernel Event IN_MODIFY Detected
-    Sentinel->>Vault: verifyIntegrity("secret.txt")
-    Vault->>FS: Re-compute Live SHA-256 Hash
-    Vault-->>Sentinel: Hash Mismatch == TRUE (Tampering Confirmed)
-    Sentinel->>Log: 🚨 Alert: SHA-256 Hash Mismatch & Metadata Altered
+    Sentinel->>Verifier: verifyIntegrity("sensitive_file")
+    Verifier->>FS: Re-compute Live SHA-256 Hash
+    Verifier-->>Sentinel: Hash Mismatch == TRUE (Tampering Confirmed)
+    Sentinel->>Log: 🚨 Alert: Cryptographic Hash Mismatch & Metadata Altered
 ```
 
 ---
@@ -128,7 +128,7 @@ sequenceDiagram
 | **Deep Metadata Tracking** | POSIX `stat()` tracking (`mode_t`, `uid`, `gid`) | Identifies permission tampering (`chmod 777`) and ownership changes |
 | **Multi-Event Interception** | `IN_MODIFY`, `IN_DELETE`, `IN_ATTRIB`, `IN_CREATE` | Full coverage against file deletion, injection, and corruption |
 | **Graceful POSIX Shutdown** | `SIGINT` (Ctrl+C) and `SIGTERM` atomic flags | Prevents resource leaks and cleans up kernel file descriptors |
-| **Automated Vault Baseline** | Local `.vault` snapshot tree | Retains ground-truth file states for security auditing |
+| **Automated Baseline Store** | Encrypted snapshot state | Retains ground-truth file states for security auditing |
 
 </div>
 
@@ -152,11 +152,11 @@ Build Tools           : GNU Make, GCC / G++ (v11+)
 # Display help and CLI options
 $ ./bin/sentinel-guard --help
 
-# Monitor default directory (test_protected)
+# Monitor default directory
 $ ./bin/sentinel-guard
 
 # Monitor a specific sensitive system directory
-$ ./bin/sentinel-guard -d /etc/security/configs
+$ ./bin/sentinel-guard -d /etc/security/critical_configs
 
 # Print version and build specs
 $ ./bin/sentinel-guard --version
